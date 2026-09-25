@@ -105,6 +105,21 @@ class SourceLookup(BaseModel):
     note: str = "Operator may open this link manually; this service never fetches it."
 
 
+class ScanSummary(BaseModel):
+    scan_id: str
+    document_type: DocumentType
+    country: str
+    status: ScanStatus
+    created_at: datetime
+    updated_at: datetime
+    confirmed_at: datetime | None
+
+
+class ScanListResponse(BaseModel):
+    items: list[ScanSummary]
+    next_cursor: str | None = None
+
+
 class ScanResponse(BaseModel):
     scan_id: str
     tenant_id: str

@@ -61,6 +61,10 @@ class ScanRepository(Protocol):
 
     def get_by_idempotency_key(self, tenant_id: str, key: str) -> ScanRecord | None: ...
 
+    def list_recent(
+        self, tenant_id: str, *, limit: int, cursor: str | None = None
+    ) -> tuple[list[ScanRecord], str | None]: ...
+
     def confirm(
         self,
         tenant_id: str,
@@ -115,6 +119,23 @@ class InMemoryScanRepository:
             if row.tenant_id == tenant_id and row.idempotency_key == key:
                 return copy.deepcopy(row)
         return None
+
+    def list_recent(
+        self, tenant_id: str, *, limit: int, cursor: str | None = None
+    ) -> tuple[list[ScanRecord], str | None]:
+        rows = sorted(
+            (r for r in self._rows.values() if r.tenant_id == tenant_id),
+            key=lambda r: (r.created_at, r.scan_id),
+            reverse=True,
+        )
+        if cursor:
+            indexes = [i for i, row in enumerate(rows) if row.scan_id == cursor]
+            if not indexes:
+                return [], None
+            rows = rows[indexes[0] + 1 :]
+        page = rows[: limit + 1]
+        next_cursor = page[limit - 1].scan_id if len(page) > limit else None
+        return [copy.deepcopy(r) for r in page[:limit]], next_cursor
 
     def confirm(self, tenant_id, scan_id, **changes) -> ScanRecord | None:
         with self._lock:
@@ -218,6 +239,32 @@ class PostgresScanRepository:
                 "SELECT * FROM document_scans WHERE tenant_id = %s AND idempotency_key = %s", (tenant_id, key)
             ).fetchone()
         return self._to_record(row)
+
+    def list_recent(
+        self, tenant_id: str, *, limit: int, cursor: str | None = None
+    ) -> tuple[list[ScanRecord], str | None]:
+        with self._pool.connection() as conn, conn.transaction():
+            conn.execute("SELECT set_config('app.tenant_id', %s, true)", (tenant_id,))
+            params: list[object] = [tenant_id]
+            where = "tenant_id = %s"
+            if cursor:
+                marker = conn.execute(
+                    "SELECT created_at, scan_id FROM document_scans WHERE tenant_id = %s AND scan_id = %s",
+                    (tenant_id, cursor),
+                ).fetchone()
+                if marker is None:
+                    return [], None
+                where += " AND (created_at, scan_id) < (%s, %s)"
+                params.extend([marker["created_at"], marker["scan_id"]])
+            params.append(limit + 1)
+            rows = conn.execute(
+                f"SELECT * FROM document_scans WHERE {where} ORDER BY created_at DESC, scan_id DESC LIMIT %s",  # noqa: S608
+                params,
+            ).fetchall()
+        page = [self._to_record(row) for row in rows]
+        records = [row for row in page if row is not None]
+        next_cursor = records[limit - 1].scan_id if len(records) > limit else None
+        return records[:limit], next_cursor
 
     def confirm(
         self,

@@ -8,7 +8,7 @@ import time
 import uuid
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Header, Request, Response
+from fastapi import FastAPI, Header, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, PlainTextResponse
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
@@ -27,6 +27,7 @@ from .models import (
     HealthResponse,
     ImageLimits,
     ReadyResponse,
+    ScanListResponse,
     ScanRequest,
     ScanResponse,
 )
@@ -252,6 +253,21 @@ def create_app(
             response.status_code = 200
             response.headers["Idempotent-Replayed"] = "true"
         return result
+
+    @app.get(
+        "/v1/documents",
+        response_model=ScanListResponse,
+        tags=["documents"],
+        summary="List recent scan sessions for the authenticated tenant",
+        responses={**_ERRORS},
+    )
+    def list_documents(
+        request: Request,
+        identity: WorkloadIdentity = Identity,
+        limit: int = Query(default=50, ge=1, le=200),
+        cursor: str | None = Query(default=None, pattern=r"^dscan_[A-Za-z0-9_-]{8,128}$"),
+    ) -> ScanListResponse:
+        return _svc(request).list_recent(identity, limit=limit, cursor=cursor)
 
     @app.get(
         "/v1/documents/{scan_id}",

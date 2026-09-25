@@ -22,8 +22,10 @@ from .models import (
     FaceIdSubjectHint,
     ImageDescriptor,
     Quality,
+    ScanListResponse,
     ScanRequest,
     ScanResponse,
+    ScanSummary,
     SourceLookup,
     WorkerInfo,
 )
@@ -271,6 +273,26 @@ class ScanService:
         # Clear values of protected fields are echoed once, transiently, so the operator can review.
         transient = {n: f for n, f in result["fields"].items() if is_number_field(n) or is_hash_only_field(n)}
         return self.render(record, transient_fields=transient, source_lookup=lookup), False
+
+    def list_recent(
+        self, identity: WorkloadIdentity, *, limit: int, cursor: str | None = None
+    ) -> ScanListResponse:
+        records, next_cursor = self.repo.list_recent(identity.tenant_id, limit=limit, cursor=cursor)
+        return ScanListResponse(
+            items=[
+                ScanSummary(
+                    scan_id=rec.scan_id,
+                    document_type=rec.document_type,
+                    country=rec.country,
+                    status=rec.status,
+                    created_at=rec.created_at,
+                    updated_at=rec.updated_at,
+                    confirmed_at=rec.confirmed_at,
+                )
+                for rec in records
+            ],
+            next_cursor=next_cursor,
+        )
 
     def get(self, identity: WorkloadIdentity, scan_id: str) -> ScanResponse:
         rec = self._load(identity, scan_id)

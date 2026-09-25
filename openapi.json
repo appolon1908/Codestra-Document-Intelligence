@@ -714,6 +714,33 @@
         "title": "ReadyResponse",
         "type": "object"
       },
+      "ScanListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScanSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ScanListResponse",
+        "type": "object"
+      },
       "ScanRequest": {
         "additionalProperties": false,
         "properties": {
@@ -889,6 +916,70 @@
           "worker"
         ],
         "title": "ScanResponse",
+        "type": "object"
+      },
+      "ScanSummary": {
+        "properties": {
+          "confirmed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed At"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "document_type": {
+            "enum": [
+              "national_id",
+              "passport",
+              "driver_license",
+              "residence_permit"
+            ],
+            "title": "Document Type",
+            "type": "string"
+          },
+          "scan_id": {
+            "title": "Scan Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending_review",
+              "confirmed",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scan_id",
+          "document_type",
+          "country",
+          "status",
+          "created_at",
+          "updated_at",
+          "confirmed_at"
+        ],
+        "title": "ScanSummary",
         "type": "object"
       },
       "SourceLookup": {
@@ -1186,6 +1277,157 @@
         "summary": "Capabilities",
         "tags": [
           "capabilities"
+        ]
+      }
+    },
+    "/v1/documents": {
+      "get": {
+        "operationId": "list_documents_v1_documents_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^dscan_[A-Za-z0-9_-]{8,128}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "description": "Required. Calling workload name (allowlisted, e.g. middleware-v3).",
+            "in": "header",
+            "name": "x-codestra-workload",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required. Calling workload name (allowlisted, e.g. middleware-v3).",
+              "title": "X-Codestra-Workload"
+            }
+          },
+          {
+            "description": "Required. Tenant resolved by Middleware V3; the only tenant source.",
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required. Tenant resolved by Middleware V3; the only tenant source.",
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "description": "Optional opaque operator reference.",
+            "in": "header",
+            "name": "x-codestra-actor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional opaque operator reference.",
+              "title": "X-Codestra-Actor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or malformed tenant identity"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or invalid workload token"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Calling workload not allowlisted"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "WorkloadToken": []
+          }
+        ],
+        "summary": "List recent scan sessions for the authenticated tenant",
+        "tags": [
+          "documents"
         ]
       }
     },

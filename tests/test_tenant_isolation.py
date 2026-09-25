@@ -97,3 +97,35 @@ def test_postgres_row_level_security_blocks_cross_tenant(client, repo):
                 "INSERT INTO document_scans (scan_id, tenant_id, request_id, document_type, country, status)"
                 " VALUES ('dscan_x', 'tenant-a', 'r', 'passport', 'DO', 'failed')"
             )
+
+
+
+def test_recent_list_is_tenant_scoped_and_paginated(client):
+    a1 = _scan(client, "tenant-a")
+    a2 = _scan(client, "tenant-a")
+    _scan(client, "tenant-b")
+
+    first = client.get("/v1/documents?limit=1", headers=headers("tenant-a"))
+    assert first.status_code == 200
+    body = first.json()
+    assert len(body["items"]) == 1
+    assert body["items"][0]["scan_id"] in {a1, a2}
+    assert body["next_cursor"]
+
+    second = client.get(
+        f"/v1/documents?limit=1&cursor={body['next_cursor']}",
+        headers=headers("tenant-a"),
+    )
+    assert second.status_code == 200
+    second_body = second.json()
+    assert len(second_body["items"]) == 1
+    assert second_body["items"][0]["scan_id"] in {a1, a2}
+    assert second_body["items"][0]["scan_id"] != body["items"][0]["scan_id"]
+    assert all(item["scan_id"] in {a1, a2} for item in body["items"] + second_body["items"])
+
+
+def test_recent_list_rejects_cross_tenant_cursor(client):
+    cursor = _scan(client, "tenant-a")
+    r = client.get(f"/v1/documents?cursor={cursor}", headers=headers("tenant-b"))
+    assert r.status_code == 200
+    assert r.json() == {"items": [], "next_cursor": None}
