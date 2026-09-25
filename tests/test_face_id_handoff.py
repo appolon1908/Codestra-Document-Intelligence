@@ -23,4 +23,4 @@ def test_face_id_handoff_object(client, worker_stub):
     assert body["verification"]["authenticity_verified"] is False
     assert DOC_NUMBER not in r.text
     # FACE-ID is never called: the only outbound traffic was the single OCR call.
-    assert [req.url.path for req in worker_stub.requests] == ["/v1/ocr/extract"]
+    assert [req.url.path for req in worker_stub.requests] == ["/internal/v1/ocr/extract"]

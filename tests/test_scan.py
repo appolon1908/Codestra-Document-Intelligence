@@ -1,3 +1,4 @@
+import base64
 import hashlib
 
 import httpx
@@ -55,10 +56,16 @@ def test_scan_happy_path(client, worker_stub):
     }
 
     sent = worker_stub.last_json
-    assert sent["schema_ref"] == "codestra.ocr.extract-request/v1"
-    assert sent["expected_response_schema_ref"] == "codestra.ocr.extraction-result/v1"
-    assert sent["tenant_id"] == "tenant-a"
-    assert [i["sha256"] for i in sent["images"]] == [front_sha, back_sha]
+    assert sent["schema_version"] == "1.0.0"
+    assert "tenant_id" not in sent
+    assert "schema_ref" not in sent
+    assert "expected_response_schema_ref" not in sent
+    assert all("sha256" not in i for i in sent["images"])
+    sent_digests = [
+        hashlib.sha256(base64.b64decode(i["content_base64"])).hexdigest()
+        for i in sent["images"]
+    ]
+    assert sent_digests == [front_sha, back_sha]
 
 
 def test_front_only_scan(client, worker_stub):
@@ -86,7 +93,7 @@ def test_worker_receives_service_token_not_caller_token(client, worker_stub):
     assert CALLER_USER_TOKEN not in str(req.headers)
     assert "cookie" not in req.headers
     assert "x-tenant-id" not in req.headers
-    assert str(req.url) == "http://ocr-workers.internal:8080/v1/ocr/extract"
+    assert str(req.url) == "http://ocr-workers.internal:8080/internal/v1/ocr/extract"
 
 
 @pytest.mark.parametrize(

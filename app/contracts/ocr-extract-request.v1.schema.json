@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "codestra.ocr.extract-request/v1",
   "title": "OCR worker extract request (v1)",
-  "description": "Request sent by Document Intelligence to POST {OCR_WORKER_URL}/v1/ocr/extract. Images are transient and must not be persisted by the worker.",
+  "description": "Request sent by Document Intelligence to POST {OCR_WORKER_URL}/internal/v1/ocr/extract. Images are transient and must not be persisted by the worker.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_ref", "request_id", "tenant_id", "document_type", "country", "images", "expected_response_schema_ref"],

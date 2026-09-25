@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 import struct
@@ -47,7 +48,10 @@ def b64(data: bytes) -> str:
 
 
 def worker_result(request: dict, **overrides) -> dict:
-    digests = {img["side"]: img["sha256"] for img in request["images"]}
+    digests = {
+        img["side"]: hashlib.sha256(base64.b64decode(img["content_base64"])).hexdigest()
+        for img in request["images"]
+    }
     body = {
         "schema_ref": "codestra.ocr.extraction-result/v1",
         "request_id": request["request_id"],
@@ -89,7 +93,7 @@ class WorkerStub:
 
     def handler(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
-        if request.url.path != "/v1/ocr/extract":
+        if request.url.path != "/internal/v1/ocr/extract":
             # Any other outbound call (e.g. fetching a QR URL) is a test failure.
             raise AssertionError(f"unexpected outbound request to {request.url}")
         return self.responder(json.loads(request.content))
