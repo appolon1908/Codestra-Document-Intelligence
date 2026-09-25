@@ -2,6 +2,7 @@ from enum import Enum
 from uuid import uuid4
 from fastapi import FastAPI, Header, HTTPException, status
 from pydantic import BaseModel, Field
+from .store import MemoryStore
 
 class JobState(str, Enum):
     queued="queued"; preprocessing="preprocessing"; extracting="extracting"; validating="validating"; review_required="review_required"; completed="completed"; failed="failed"; canceled="canceled"
@@ -25,14 +26,14 @@ class ResultCreate(BaseModel):
  schema_id:str; schema_version:str="1.0"; fields:dict; engine:str; model_version:str; confidence:float=Field(ge=0,le=1)
 
 app=FastAPI(title="Codestra Document Intelligence",version="0.2.0")
-_jobs:dict[str,Job]={}; _idem:dict[tuple[str,str],str]={}; _results:dict[str,ExtractionResult]={}
+_store=MemoryStore(); _jobs=_store.jobs; _idem:dict[tuple[str,str],str]={}; _results=_store.results
 
 def trusted_context(tenant:str|None,correlation:str|None):
  if not tenant or not correlation: raise HTTPException(401,"trusted tenant and correlation context required")
  return tenant,correlation
 
 def owned(job_id,tenant):
- j=_jobs.get(job_id)
+ j=_store.get_job(job_id)
  if not j or j.tenant_id!=tenant: raise HTTPException(404,"job not found")
  return j
 
@@ -47,7 +48,7 @@ def create_job(body:JobCreate,x_tenant_id:str|None=Header(None),x_correlation_id
  key=(tenant,idempotency_key)
  if key in _idem: return _jobs[_idem[key]]
  jid=str(uuid4()); j=Job(job_id=jid,operation_id=str(uuid4()),tenant_id=tenant,correlation_id=corr,state=JobState.queued,document_ref=body.document_ref,document_type=body.document_type)
- _jobs[jid]=j; _idem[key]=jid; return j
+ _store.put_job(j); _idem[key]=jid; return j
 @app.get("/v1/jobs/{job_id}",response_model=Job)
 def get_job(job_id:str,x_tenant_id:str|None=Header(None),x_correlation_id:str|None=Header(None)):
  tenant,_=trusted_context(x_tenant_id,x_correlation_id); return owned(job_id,tenant)
@@ -70,12 +71,12 @@ def put_result(job_id:str,body:ResultCreate,x_tenant_id:str|None=Header(None),x_
  tenant,corr=trusted_context(x_tenant_id,x_correlation_id); j=owned(job_id,tenant)
  if j.state not in {JobState.validating,JobState.review_required}: raise HTTPException(409,"job is not accepting a result")
  result=ExtractionResult(job_id=j.job_id,tenant_id=tenant,schema_id=body.schema_id,schema_version=body.schema_version,document_type=j.document_type,fields=body.fields,engine=body.engine,model_version=body.model_version,confidence=body.confidence,correlation_id=corr)
- _results[job_id]=result
+ _store.put_result(job_id,result)
  j.state=JobState.completed if body.confidence>=0.80 else JobState.review_required
  return result
 
 @app.get("/v1/jobs/{job_id}/result",response_model=ExtractionResult)
 def get_result(job_id:str,x_tenant_id:str|None=Header(None),x_correlation_id:str|None=Header(None)):
- tenant,_=trusted_context(x_tenant_id,x_correlation_id); owned(job_id,tenant); r=_results.get(job_id)
+ tenant,_=trusted_context(x_tenant_id,x_correlation_id); owned(job_id,tenant); r=_store.get_result(job_id)
  if not r: raise HTTPException(404,"result not found")
  return r
