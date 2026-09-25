@@ -1,0 +1,1827 @@
+{
+  "components": {
+    "schemas": {
+      "Capabilities": {
+        "properties": {
+          "api_version": {
+            "const": "v1",
+            "default": "v1",
+            "title": "Api Version",
+            "type": "string"
+          },
+          "authenticity_verification": {
+            "const": false,
+            "default": false,
+            "title": "Authenticity Verification",
+            "type": "boolean"
+          },
+          "disclaimer": {
+            "default": "OCR and QR extraction is an intake aid only. It is not government authenticity verification and must not be treated as proof that a document is genuine.",
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "document_types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Document Types",
+            "type": "array"
+          },
+          "face_id_handoff_schema_ref": {
+            "title": "Face Id Handoff Schema Ref",
+            "type": "string"
+          },
+          "image_limits": {
+            "$ref": "#/components/schemas/ImageLimits"
+          },
+          "ocr_worker_schema_refs": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Ocr Worker Schema Refs",
+            "type": "object"
+          },
+          "raw_image_persistence": {
+            "const": false,
+            "default": false,
+            "title": "Raw Image Persistence",
+            "type": "boolean"
+          },
+          "sensitive_number_storage": {
+            "const": "keyed_hash_and_last4",
+            "default": "keyed_hash_and_last4",
+            "title": "Sensitive Number Storage",
+            "type": "string"
+          },
+          "service": {
+            "const": "codestra-document-intelligence",
+            "default": "codestra-document-intelligence",
+            "title": "Service",
+            "type": "string"
+          },
+          "source_lookup_allowlist_configured": {
+            "title": "Source Lookup Allowlist Configured",
+            "type": "boolean"
+          },
+          "source_lookup_auto_fetch": {
+            "const": false,
+            "default": false,
+            "title": "Source Lookup Auto Fetch",
+            "type": "boolean"
+          },
+          "tenant_isolation": {
+            "const": "workload_identity_header",
+            "default": "workload_identity_header",
+            "title": "Tenant Isolation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document_types",
+          "image_limits",
+          "ocr_worker_schema_refs",
+          "face_id_handoff_schema_ref",
+          "source_lookup_allowlist_configured"
+        ],
+        "title": "Capabilities",
+        "type": "object"
+      },
+      "ConfirmRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "corrections": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "Operator-corrected field values keyed by field name. Omitted fields keep the extracted value. Sensitive numbers are hashed and reduced to last4 before persistence.",
+            "maxProperties": 64,
+            "title": "Corrections",
+            "type": "object"
+          }
+        },
+        "title": "ConfirmRequest",
+        "type": "object"
+      },
+      "DocumentIdentity": {
+        "properties": {
+          "document_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Tenant-scoped keyed hash of the primary document number",
+            "title": "Document Hash"
+          },
+          "number_last4": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number Last4"
+          },
+          "number_masked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number Masked"
+          }
+        },
+        "required": [
+          "number_last4",
+          "number_masked",
+          "document_hash"
+        ],
+        "title": "DocumentIdentity",
+        "type": "object"
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "scan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scan Id"
+          },
+          "violations": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Violations"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorBody",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "ExtractedField": {
+        "properties": {
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FieldEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last4": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last4"
+          },
+          "masked_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Masked Value"
+          },
+          "redacted": {
+            "default": false,
+            "title": "Redacted",
+            "type": "boolean"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "enum": [
+                  "visual",
+                  "mrz",
+                  "barcode",
+                  "qr",
+                  "operator"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Field value. Always null for redacted fields except in the transient scan response.",
+            "title": "Value"
+          },
+          "value_persisted": {
+            "default": true,
+            "description": "False when the value shown is transient and not stored by this service",
+            "title": "Value Persisted",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "value",
+          "confidence"
+        ],
+        "title": "ExtractedField",
+        "type": "object"
+      },
+      "FaceIdDocumentRef": {
+        "properties": {
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "document_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Hash"
+          },
+          "document_type": {
+            "enum": [
+              "national_id",
+              "passport",
+              "driver_license",
+              "residence_permit"
+            ],
+            "title": "Document Type",
+            "type": "string"
+          },
+          "number_last4": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number Last4"
+          }
+        },
+        "required": [
+          "document_type",
+          "country",
+          "number_last4",
+          "document_hash"
+        ],
+        "title": "FaceIdDocumentRef",
+        "type": "object"
+      },
+      "FaceIdHandoff": {
+        "description": "Client-ready object for the FACE-ID adapter (owned by Middleware V3).\n\nDocument Intelligence never calls FACE-ID. The adapter must fetch the\nportrait image from the caller-held source, matched by ``front_image_sha256``.",
+        "properties": {
+          "back_image_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Back Image Sha256"
+          },
+          "confirmed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed At"
+          },
+          "document": {
+            "$ref": "#/components/schemas/FaceIdDocumentRef"
+          },
+          "front_image_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Front Image Sha256"
+          },
+          "portrait_detected": {
+            "title": "Portrait Detected",
+            "type": "boolean"
+          },
+          "portrait_side": {
+            "anyOf": [
+              {
+                "enum": [
+                  "front",
+                  "back"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portrait Side"
+          },
+          "ready": {
+            "title": "Ready",
+            "type": "boolean"
+          },
+          "scan_id": {
+            "title": "Scan Id",
+            "type": "string"
+          },
+          "schema_ref": {
+            "const": "codestra.document.face-id-handoff/v1",
+            "default": "codestra.document.face-id-handoff/v1",
+            "title": "Schema Ref",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending_review",
+              "confirmed",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "subject": {
+            "$ref": "#/components/schemas/FaceIdSubjectHint"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "verification": {
+            "$ref": "#/components/schemas/Verification"
+          }
+        },
+        "required": [
+          "scan_id",
+          "tenant_id",
+          "ready",
+          "status",
+          "confirmed_at",
+          "document",
+          "subject",
+          "portrait_detected",
+          "portrait_side",
+          "front_image_sha256",
+          "back_image_sha256"
+        ],
+        "title": "FaceIdHandoff",
+        "type": "object"
+      },
+      "FaceIdSubjectHint": {
+        "properties": {
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "given_names": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Given Names"
+          },
+          "sex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sex"
+          },
+          "surnames": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Surnames"
+          }
+        },
+        "title": "FaceIdSubjectHint",
+        "type": "object"
+      },
+      "FieldEvidence": {
+        "properties": {
+          "bbox": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bbox"
+          },
+          "side": {
+            "anyOf": [
+              {
+                "enum": [
+                  "front",
+                  "back"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Side"
+          }
+        },
+        "title": "FieldEvidence",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "ImageDescriptor": {
+        "properties": {
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "media_type": {
+            "enum": [
+              "image/jpeg",
+              "image/png"
+            ],
+            "title": "Media Type",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "side": {
+            "enum": [
+              "front",
+              "back"
+            ],
+            "title": "Side",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "side",
+          "media_type",
+          "width",
+          "height",
+          "size_bytes",
+          "sha256"
+        ],
+        "title": "ImageDescriptor",
+        "type": "object"
+      },
+      "ImageLimits": {
+        "properties": {
+          "max_bytes": {
+            "title": "Max Bytes",
+            "type": "integer"
+          },
+          "max_dimension": {
+            "title": "Max Dimension",
+            "type": "integer"
+          },
+          "max_pixels": {
+            "title": "Max Pixels",
+            "type": "integer"
+          },
+          "media_types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Media Types",
+            "type": "array"
+          },
+          "min_dimension": {
+            "title": "Min Dimension",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "max_bytes",
+          "min_dimension",
+          "max_dimension",
+          "max_pixels",
+          "media_types"
+        ],
+        "title": "ImageLimits",
+        "type": "object"
+      },
+      "Quality": {
+        "properties": {
+          "overall_confidence": {
+            "title": "Overall Confidence",
+            "type": "number"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "overall_confidence"
+        ],
+        "title": "Quality",
+        "type": "object"
+      },
+      "ReadyResponse": {
+        "properties": {
+          "checks": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "title": "Checks",
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "not_ready"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "checks"
+        ],
+        "title": "ReadyResponse",
+        "type": "object"
+      },
+      "ScanRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "back_image_base64": {
+            "anyOf": [
+              {
+                "maxLength": 12582912,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "JPEG or PNG",
+            "title": "Back Image Base64"
+          },
+          "country": {
+            "description": "ISO 3166-1 alpha-2 or alpha-3 code",
+            "pattern": "^[A-Z]{2,3}$",
+            "title": "Country",
+            "type": "string"
+          },
+          "document_type": {
+            "enum": [
+              "national_id",
+              "passport",
+              "driver_license",
+              "residence_permit"
+            ],
+            "title": "Document Type",
+            "type": "string"
+          },
+          "front_image_base64": {
+            "description": "JPEG or PNG",
+            "maxLength": 12582912,
+            "minLength": 1,
+            "title": "Front Image Base64",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document_type",
+          "country",
+          "front_image_base64"
+        ],
+        "title": "ScanRequest",
+        "type": "object"
+      },
+      "ScanResponse": {
+        "properties": {
+          "confirmed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed At"
+          },
+          "corrected_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Corrected Fields",
+            "type": "array"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "document": {
+            "$ref": "#/components/schemas/DocumentIdentity"
+          },
+          "document_type": {
+            "enum": [
+              "national_id",
+              "passport",
+              "driver_license",
+              "residence_permit"
+            ],
+            "title": "Document Type",
+            "type": "string"
+          },
+          "fields": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ExtractedField"
+            },
+            "title": "Fields",
+            "type": "object"
+          },
+          "images": {
+            "items": {
+              "$ref": "#/components/schemas/ImageDescriptor"
+            },
+            "title": "Images",
+            "type": "array"
+          },
+          "portrait_detected": {
+            "title": "Portrait Detected",
+            "type": "boolean"
+          },
+          "qr_present": {
+            "title": "Qr Present",
+            "type": "boolean"
+          },
+          "quality": {
+            "$ref": "#/components/schemas/Quality"
+          },
+          "scan_id": {
+            "title": "Scan Id",
+            "type": "string"
+          },
+          "source_lookup": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceLookup"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Only returned in the scan response; never stored"
+          },
+          "status": {
+            "enum": [
+              "pending_review",
+              "confirmed",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tenant_id": {
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "verification": {
+            "$ref": "#/components/schemas/Verification"
+          },
+          "worker": {
+            "$ref": "#/components/schemas/WorkerInfo"
+          }
+        },
+        "required": [
+          "scan_id",
+          "tenant_id",
+          "document_type",
+          "country",
+          "status",
+          "created_at",
+          "updated_at",
+          "confirmed_at",
+          "images",
+          "fields",
+          "corrected_fields",
+          "quality",
+          "document",
+          "portrait_detected",
+          "qr_present",
+          "worker"
+        ],
+        "title": "ScanResponse",
+        "type": "object"
+      },
+      "SourceLookup": {
+        "description": "QR source lookup link. Transient: never persisted and never fetched by this service.",
+        "properties": {
+          "allowlisted": {
+            "title": "Allowlisted",
+            "type": "boolean"
+          },
+          "fetched": {
+            "const": false,
+            "default": false,
+            "title": "Fetched",
+            "type": "boolean"
+          },
+          "host": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Host"
+          },
+          "note": {
+            "default": "Operator may open this link manually; this service never fetches it.",
+            "title": "Note",
+            "type": "string"
+          },
+          "persisted": {
+            "const": false,
+            "default": false,
+            "title": "Persisted",
+            "type": "boolean"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Present only when the host is allowlisted",
+            "title": "Url"
+          }
+        },
+        "required": [
+          "allowlisted",
+          "url"
+        ],
+        "title": "SourceLookup",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "Verification": {
+        "properties": {
+          "authenticity_verified": {
+            "const": false,
+            "default": false,
+            "title": "Authenticity Verified",
+            "type": "boolean"
+          },
+          "disclaimer": {
+            "default": "OCR and QR extraction is an intake aid only. It is not government authenticity verification and must not be treated as proof that a document is genuine.",
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "method": {
+            "const": "ocr_intake_aid",
+            "default": "ocr_intake_aid",
+            "title": "Method",
+            "type": "string"
+          }
+        },
+        "title": "Verification",
+        "type": "object"
+      },
+      "WorkerInfo": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "schema_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schema Ref"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "title": "WorkerInfo",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "WorkloadToken": {
+        "description": "Middleware V3 workload token",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "Standalone multi-tenant document intelligence API. Reachable only via Caddy -> Kong -> Middleware V3 -> Document Intelligence. OCR runs in Codestra-OCR-Workers.\n\n**OCR/QR output is an intake aid, not government authenticity verification.** Raw document images are never persisted; sensitive document numbers are stored only as a tenant-scoped keyed hash plus last four characters.",
+    "title": "Codestra Document Intelligence API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/health/ready": {
+      "get": {
+        "operationId": "health_ready_health_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
+                }
+              }
+            },
+            "description": "Not ready"
+          }
+        },
+        "summary": "Health Ready",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Healthz",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/metrics": {
+      "get": {
+        "operationId": "metrics_endpoint_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Metrics Endpoint",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/readyz": {
+      "get": {
+        "operationId": "readyz_readyz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
+                }
+              }
+            },
+            "description": "Not ready"
+          }
+        },
+        "summary": "Readyz",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/v1/capabilities": {
+      "get": {
+        "operationId": "capabilities_v1_capabilities_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Capabilities"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Capabilities",
+        "tags": [
+          "capabilities"
+        ]
+      }
+    },
+    "/v1/documents/scan": {
+      "post": {
+        "operationId": "scan_document_v1_documents_scan_post",
+        "parameters": [
+          {
+            "description": "Optional. Replaying the same key with the same images returns the original scan (200).",
+            "in": "header",
+            "name": "idempotency-key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Za-z0-9._:-]{8,128}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional. Replaying the same key with the same images returns the original scan (200).",
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "description": "Required. Calling workload name (allowlisted, e.g. middleware-v3).",
+            "in": "header",
+            "name": "x-codestra-workload",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required. Calling workload name (allowlisted, e.g. middleware-v3).",
+              "title": "X-Codestra-Workload"
+            }
+          },
+          {
+            "description": "Required. Tenant resolved by Middleware V3; the only tenant source.",
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required. Tenant resolved by Middleware V3; the only tenant source.",
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "description": "Optional opaque operator reference.",
+            "in": "header",
+            "name": "x-codestra-actor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional opaque operator reference.",
+              "title": "X-Codestra-Actor"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanResponse"
+                }
+              }
+            },
+            "description": "Idempotent replay of an earlier scan"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or malformed tenant identity"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or invalid workload token"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Calling workload not allowlisted"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Idempotency-Key reused for a different request"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request or image"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "OCR worker schema mismatch or error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "OCR worker unavailable"
+          }
+        },
+        "security": [
+          {
+            "WorkloadToken": []
+          }
+        ],
+        "summary": "Scan a document (front/back images) via the OCR worker",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/v1/documents/{scan_id}": {
+      "get": {
+        "operationId": "get_document_v1_documents__scan_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scan_id",
+            "required": true,
+            "schema": {
+              "title": "Scan Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Required. Calling workload name (allowlisted, e.g. middleware-v3).",
+            "in": "header",
+            "name": "x-codestra-workload",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required. Calling workload name (allowlisted, e.g. middleware-v3).",
+              "title": "X-Codestra-Workload"
+            }
+          },
+          {
+            "description": "Required. Tenant resolved by Middleware V3; the only tenant source.",
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required. Tenant resolved by Middleware V3; the only tenant source.",
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "description": "Optional opaque operator reference.",
+            "in": "header",
+            "name": "x-codestra-actor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional opaque operator reference.",
+              "title": "X-Codestra-Actor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or malformed tenant identity"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or invalid workload token"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Calling workload not allowlisted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Scan not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "WorkloadToken": []
+          }
+        ],
+        "summary": "Get a scan session (tenant-scoped)",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/v1/documents/{scan_id}/confirm": {
+      "post": {
+        "operationId": "confirm_document_v1_documents__scan_id__confirm_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scan_id",
+            "required": true,
+            "schema": {
+              "title": "Scan Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Required. Calling workload name (allowlisted, e.g. middleware-v3).",
+            "in": "header",
+            "name": "x-codestra-workload",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required. Calling workload name (allowlisted, e.g. middleware-v3).",
+              "title": "X-Codestra-Workload"
+            }
+          },
+          {
+            "description": "Required. Tenant resolved by Middleware V3; the only tenant source.",
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required. Tenant resolved by Middleware V3; the only tenant source.",
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "description": "Optional opaque operator reference.",
+            "in": "header",
+            "name": "x-codestra-actor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional opaque operator reference.",
+              "title": "X-Codestra-Actor"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or malformed tenant identity"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or invalid workload token"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Calling workload not allowlisted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Scan not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Scan not in pending_review"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid corrections"
+          }
+        },
+        "security": [
+          {
+            "WorkloadToken": []
+          }
+        ],
+        "summary": "Confirm a scan with operator corrections",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/v1/documents/{scan_id}/face-id-handoff": {
+      "get": {
+        "operationId": "face_id_handoff_v1_documents__scan_id__face_id_handoff_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scan_id",
+            "required": true,
+            "schema": {
+              "title": "Scan Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Required. Calling workload name (allowlisted, e.g. middleware-v3).",
+            "in": "header",
+            "name": "x-codestra-workload",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required. Calling workload name (allowlisted, e.g. middleware-v3).",
+              "title": "X-Codestra-Workload"
+            }
+          },
+          {
+            "description": "Required. Tenant resolved by Middleware V3; the only tenant source.",
+            "in": "header",
+            "name": "x-tenant-id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required. Tenant resolved by Middleware V3; the only tenant source.",
+              "title": "X-Tenant-Id"
+            }
+          },
+          {
+            "description": "Optional opaque operator reference.",
+            "in": "header",
+            "name": "x-codestra-actor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional opaque operator reference.",
+              "title": "X-Codestra-Actor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaceIdHandoff"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or malformed tenant identity"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Missing or invalid workload token"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Calling workload not allowlisted"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Scan not found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "WorkloadToken": []
+          }
+        ],
+        "summary": "Client-ready result object for the FACE-ID adapter (this service never calls FACE-ID)",
+        "tags": [
+          "documents"
+        ]
+      }
+    }
+  }
+}
