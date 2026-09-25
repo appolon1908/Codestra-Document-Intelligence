@@ -12,3 +12,11 @@ def test_state_machine_and_operation_readback():
  for s in ["preprocessing","extracting","validating","completed"]: assert c.post(url,headers=headers,json={"state":s}).status_code==200
  assert c.get("/v1/operations/"+j["operation_id"],headers=headers).json()["state"]=="completed"
 def test_missing_context_denied(): assert c.post("/v1/jobs",json={"document_ref":"x"}).status_code==401
+
+def test_result_flow_and_review_threshold():
+ j=make("result"); h=H(k="r"); u="/v1/jobs/"+j["job_id"]+"/transitions"
+ for state in ["preprocessing","extracting","validating"]: assert c.post(u,headers=h,json={"state":state}).status_code==200
+ payload={"schema_id":"codestra.generic_document","fields":{"text":"hello"},"engine":"stub","model_version":"1","confidence":.5}
+ assert c.put("/v1/jobs/"+j["job_id"]+"/result",headers=h,json=payload).status_code==200
+ assert c.get("/v1/jobs/"+j["job_id"],headers=h).json()["state"]=="review_required"
+ assert c.get("/v1/jobs/"+j["job_id"]+"/result",headers=h).json()["fields"]["text"]=="hello"

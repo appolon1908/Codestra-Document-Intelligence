@@ -19,9 +19,13 @@ class Transition(BaseModel): state:JobState; reason:str|None=None
 class Job(BaseModel):
  job_id:str; operation_id:str; tenant_id:str; correlation_id:str; state:JobState; document_ref:str; document_type:str; failure_reason:str|None=None
 class ErrorEnvelope(BaseModel): code:str; message:str; retryable:bool=False; correlation_id:str|None=None
+class ExtractionResult(BaseModel):
+ job_id:str; tenant_id:str; schema_id:str; schema_version:str; document_type:str; fields:dict; engine:str; model_version:str; confidence:float=Field(ge=0,le=1); correlation_id:str
+class ResultCreate(BaseModel):
+ schema_id:str; schema_version:str="1.0"; fields:dict; engine:str; model_version:str; confidence:float=Field(ge=0,le=1)
 
 app=FastAPI(title="Codestra Document Intelligence",version="0.2.0")
-_jobs:dict[str,Job]={}; _idem:dict[tuple[str,str],str]={}
+_jobs:dict[str,Job]={}; _idem:dict[tuple[str,str],str]={}; _results:dict[str,ExtractionResult]={}
 
 def trusted_context(tenant:str|None,correlation:str|None):
  if not tenant or not correlation: raise HTTPException(401,"trusted tenant and correlation context required")
@@ -60,3 +64,18 @@ def operation(operation_id:str,x_tenant_id:str|None=Header(None),x_correlation_i
  for j in _jobs.values():
   if j.operation_id==operation_id and j.tenant_id==tenant:return j
  raise HTTPException(404,"operation not found")
+
+@app.put("/v1/jobs/{job_id}/result",response_model=ExtractionResult)
+def put_result(job_id:str,body:ResultCreate,x_tenant_id:str|None=Header(None),x_correlation_id:str|None=Header(None)):
+ tenant,corr=trusted_context(x_tenant_id,x_correlation_id); j=owned(job_id,tenant)
+ if j.state not in {JobState.validating,JobState.review_required}: raise HTTPException(409,"job is not accepting a result")
+ result=ExtractionResult(job_id=j.job_id,tenant_id=tenant,schema_id=body.schema_id,schema_version=body.schema_version,document_type=j.document_type,fields=body.fields,engine=body.engine,model_version=body.model_version,confidence=body.confidence,correlation_id=corr)
+ _results[job_id]=result
+ j.state=JobState.completed if body.confidence>=0.80 else JobState.review_required
+ return result
+
+@app.get("/v1/jobs/{job_id}/result",response_model=ExtractionResult)
+def get_result(job_id:str,x_tenant_id:str|None=Header(None),x_correlation_id:str|None=Header(None)):
+ tenant,_=trusted_context(x_tenant_id,x_correlation_id); owned(job_id,tenant); r=_results.get(job_id)
+ if not r: raise HTTPException(404,"result not found")
+ return r
