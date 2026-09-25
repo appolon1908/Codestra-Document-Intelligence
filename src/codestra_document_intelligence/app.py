@@ -26,15 +26,15 @@ class ResultCreate(BaseModel):
  schema_id:str; schema_version:str="1.0"; fields:dict; engine:str; model_version:str; confidence:float=Field(ge=0,le=1)
 
 app=FastAPI(title="Codestra Document Intelligence",version="0.2.0")
-_store=MemoryStore(); _jobs=_store.jobs; _idem:dict[tuple[str,str],str]={}; _results=_store.results
+_store=MemoryStore()
 
 def trusted_context(tenant:str|None,correlation:str|None):
  if not tenant or not correlation: raise HTTPException(401,"trusted tenant and correlation context required")
  return tenant,correlation
 
 def owned(job_id,tenant):
- j=_store.get_job(job_id)
- if not j or j.tenant_id!=tenant: raise HTTPException(404,"job not found")
+ j=_store.get_job(job_id,tenant)
+ if not j: raise HTTPException(404,"job not found")
  return j
 
 @app.get("/healthz")
@@ -45,10 +45,12 @@ def ready(): return {"status":"ready"}
 def create_job(body:JobCreate,x_tenant_id:str|None=Header(None),x_correlation_id:str|None=Header(None),idempotency_key:str|None=Header(None)):
  tenant,corr=trusted_context(x_tenant_id,x_correlation_id)
  if not idempotency_key: raise HTTPException(400,"idempotency-key required")
- key=(tenant,idempotency_key)
- if key in _idem: return _jobs[_idem[key]]
+ existing=_store.get_idempotent_job(tenant,idempotency_key)
+ if existing: return existing
  jid=str(uuid4()); j=Job(job_id=jid,operation_id=str(uuid4()),tenant_id=tenant,correlation_id=corr,state=JobState.queued,document_ref=body.document_ref,document_type=body.document_type)
- _store.put_job(j); _idem[key]=jid; return j
+ _store.put_job(j)
+ if not _store.claim_idempotency(tenant,idempotency_key,jid): return _store.get_idempotent_job(tenant,idempotency_key)
+ return j
 @app.get("/v1/jobs/{job_id}",response_model=Job)
 def get_job(job_id:str,x_tenant_id:str|None=Header(None),x_correlation_id:str|None=Header(None)):
  tenant,_=trusted_context(x_tenant_id,x_correlation_id); return owned(job_id,tenant)
@@ -62,9 +64,9 @@ def transition(job_id:str,body:Transition,x_tenant_id:str|None=Header(None),x_co
 @app.get("/v1/operations/{operation_id}",response_model=Job)
 def operation(operation_id:str,x_tenant_id:str|None=Header(None),x_correlation_id:str|None=Header(None)):
  tenant,_=trusted_context(x_tenant_id,x_correlation_id)
- for j in _jobs.values():
-  if j.operation_id==operation_id and j.tenant_id==tenant:return j
- raise HTTPException(404,"operation not found")
+ j=_store.get_by_operation(operation_id,tenant)
+ if not j: raise HTTPException(404,"operation not found")
+ return j
 
 @app.put("/v1/jobs/{job_id}/result",response_model=ExtractionResult)
 def put_result(job_id:str,body:ResultCreate,x_tenant_id:str|None=Header(None),x_correlation_id:str|None=Header(None)):
