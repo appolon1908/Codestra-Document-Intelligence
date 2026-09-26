@@ -1,0 +1,40 @@
+﻿name: foundation-ci
+on:
+  pull_request:
+  push:
+    branches:
+      - "architecture/**"
+      - "feature/**"
+permissions:
+  contents: read
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify required foundation documents
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f PLATFORM.md
+          test -f docs/ARCHITECTURE.md
+          test -f docs/security/SECURITY-BASELINE.md
+          test -f docs/testing/TEST-STRATEGY.md
+          test -f docs/foundation/FOUNDATION-OUTLINE.md
+          test -f docs/foundation/ROADMAP.md
+      - name: Reject committed secret material
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-files | grep -E '(^|/)(\.env$|\.env\.|id_rsa$|id_ed25519$|.*\.pem$|.*\.key$)' ; then
+            echo "Potential secret material is tracked."
+            exit 1
+          fi
+      - name: Verify no merge conflict markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -n -E '^(<<<<<<<|=======|>>>>>>>)' -- . ':!*.lock' ; then
+            echo "Merge conflict markers found."
+            exit 1
+          fi
