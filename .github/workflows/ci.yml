@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  push:
+    branches: ["development", "testing", "staging", "production", "mission/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - name: Install
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements-dev.txt
+      - name: Ruff
+        run: python -m ruff check app tests scripts
+      - name: Tests
+        run: python -m pytest
+      - name: OpenAPI exact match
+        run: |
+          python scripts/export_openapi.py
+          git diff --exit-code -- openapi.json
+      - name: Docker build
+        run: docker build -t codestra-document-intelligence:ci .

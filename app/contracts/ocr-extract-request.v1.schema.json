@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "codestra.ocr.extract-request/v1",
+  "title": "OCR worker extract request (v1)",
+  "description": "Request sent by Document Intelligence to POST {OCR_WORKER_URL}/internal/v1/ocr/extract. Images are transient and must not be persisted by the worker.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_ref", "request_id", "tenant_id", "document_type", "country", "images", "expected_response_schema_ref"],
+  "properties": {
+    "schema_ref": {"const": "codestra.ocr.extract-request/v1"},
+    "request_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "tenant_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$"},
+    "document_type": {"type": "string"},
+    "country": {"type": "string", "pattern": "^[A-Z]{2,3}$"},
+    "expected_response_schema_ref": {"const": "codestra.ocr.extraction-result/v1"},
+    "images": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["side", "media_type", "sha256", "content_base64"],
+        "properties": {
+          "side": {"enum": ["front", "back"]},
+          "media_type": {"enum": ["image/jpeg", "image/png"]},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "content_base64": {"type": "string"}
+        }
+      }
+    }
+  }
+}

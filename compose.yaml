@@ -1,0 +1,83 @@
+# Development stack. Not a production deployment.
+#
+#   ./scripts/dev-secrets.sh && docker compose up --build
+#
+# Networks:
+#   docintel-private (internal, no egress): API <-> Postgres <-> OCR worker
+#   docintel-edge: where Middleware V3 reaches the API (published on loopback only)
+name: codestra-document-intelligence
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: docintel_owner
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_owner_password
+      POSTGRES_DB: docintel
+      DOCINTEL_APP_PASSWORD_FILE: /run/secrets/pg_app_password
+    entrypoint: ["/bin/sh", "-c", "export DOCINTEL_APP_PASSWORD=\"$$(cat $$DOCINTEL_APP_PASSWORD_FILE)\" && exec docker-entrypoint.sh postgres"]
+    secrets: [pg_owner_password, pg_app_password]
+    volumes:
+      - docintel_pg:/var/lib/postgresql/data
+      - ./deploy/postgres:/docker-entrypoint-initdb.d:ro
+    networks: [docintel-private]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docintel_owner -d docintel"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  ocr-worker:
+    # Dev stub. Point OCR_WORKER_URL at Codestra-OCR-Workers to use the real worker.
+    build: ./deploy/dev-ocr-worker-stub
+    environment:
+      OCR_WORKER_TOKEN_FILE: /run/secrets/ocr_worker_token
+    secrets: [ocr_worker_token]
+    networks: [docintel-private]
+
+  document-intelligence:
+    build: .
+    image: codestra-document-intelligence:dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ocr-worker:
+        condition: service_started
+    environment:
+      APP_ENV: development
+      DATABASE_URL_FILE: /run/secrets/database_url
+      OCR_WORKER_URL: ${OCR_WORKER_URL:-http://ocr-worker:8080}
+      OCR_WORKER_TOKEN_FILE: /run/secrets/ocr_worker_token
+      INBOUND_SERVICE_TOKENS_FILE: /run/secrets/inbound_service_tokens
+      DOCUMENT_HASH_PEPPER_FILE: /run/secrets/document_hash_pepper
+      ALLOWED_WORKLOADS: middleware-v3
+      SOURCE_LOOKUP_ALLOWED_HOSTS: ${SOURCE_LOOKUP_ALLOWED_HOSTS:-}
+    secrets: [database_url, ocr_worker_token, inbound_service_tokens, document_hash_pepper]
+    networks: [docintel-private, docintel-edge]
+    ports:
+      - "127.0.0.1:${DOCINTEL_PORT:-8097}:8080"
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+
+networks:
+  docintel-private:
+    internal: true
+  docintel-edge: {}
+
+volumes:
+  docintel_pg: {}
+
+secrets:
+  pg_owner_password:
+    file: ./secrets/pg_owner_password
+  pg_app_password:
+    file: ./secrets/pg_app_password
+  database_url:
+    file: ./secrets/database_url
+  ocr_worker_token:
+    file: ./secrets/ocr_worker_token
+  inbound_service_tokens:
+    file: ./secrets/inbound_service_tokens
+  document_hash_pepper:
+    file: ./secrets/document_hash_pepper

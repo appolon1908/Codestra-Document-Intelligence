@@ -1,0 +1,50 @@
+# Install as .github/workflows/ci.yml (requires a token with `workflow` scope to push).
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: docintel_owner
+          POSTGRES_PASSWORD: ownerpw
+          POSTGRES_DB: docintel
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U docintel_owner -d docintel"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql://docintel_app:apppw@127.0.0.1:5432/docintel
+      TEST_DATABASE_ADMIN_URL: postgresql://docintel_owner:ownerpw@127.0.0.1:5432/docintel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements-dev.txt
+      - name: Create non-superuser app role (RLS enforced)
+        env:
+          PGPASSWORD: ownerpw
+        run: |
+          sed -n '/<<.SQL./,/^SQL$/p' deploy/postgres/10-docintel-roles.sh | sed '1d;$d' > /tmp/roles.sql
+          psql -h 127.0.0.1 -U docintel_owner -d docintel -v ON_ERROR_STOP=1 -v app_password=apppw -f /tmp/roles.sql
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest
+      - name: OpenAPI contract is committed and current
+        run: python scripts/export_openapi.py && git diff --exit-code openapi.json
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t codestra-document-intelligence:ci .
