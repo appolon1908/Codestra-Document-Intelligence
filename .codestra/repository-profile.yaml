@@ -4,8 +4,8 @@ repository: "appolon1908/Codestra-Document-Intelligence"
 canonical_url: "https://github.com/appolon1908/Codestra-Document-Intelligence"
 default_branch_observed: "main"
 classification:
-  type: "application"
-  subtype: "general"
+  type: "ai-service"
+  subtype: "document-ai"
   standalone: true
   integration_boundary: "api-or-endpoint"
 lifecycle:
