@@ -1,0 +1,698 @@
+{
+  "schema_version": "codestra.workstations.v3",
+  "family": "document-intelligence",
+  "product": "Codestra-Document-Intelligence",
+  "sections": [
+    {
+      "section": "di-01-ingestion",
+      "branch": "section/di-01-ingestion",
+      "order": 1,
+      "depends_on": [],
+      "subsections": [
+        {
+          "subsection": "01-upload",
+          "workstation_id": "codestra-document-intelligence::di-01-ingestion::01-upload",
+          "branch": "subsection/di-01-ingestion--01-upload",
+          "parent_branch": "section/di-01-ingestion",
+          "order": 1,
+          "depends_on": [],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-01-ingestion/subsections/01-upload/repo"
+        },
+        {
+          "subsection": "02-validation",
+          "workstation_id": "codestra-document-intelligence::di-01-ingestion::02-validation",
+          "branch": "subsection/di-01-ingestion--02-validation",
+          "parent_branch": "section/di-01-ingestion",
+          "order": 2,
+          "depends_on": [
+            "codestra-document-intelligence::di-01-ingestion::01-upload"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-01-ingestion/subsections/02-validation/repo"
+        },
+        {
+          "subsection": "03-normalization",
+          "workstation_id": "codestra-document-intelligence::di-01-ingestion::03-normalization",
+          "branch": "subsection/di-01-ingestion--03-normalization",
+          "parent_branch": "section/di-01-ingestion",
+          "order": 3,
+          "depends_on": [
+            "codestra-document-intelligence::di-01-ingestion::02-validation"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-01-ingestion/subsections/03-normalization/repo"
+        }
+      ]
+    },
+    {
+      "section": "di-02-classification",
+      "branch": "section/di-02-classification",
+      "order": 2,
+      "depends_on": [
+        "codestra-document-intelligence::di-01-ingestion"
+      ],
+      "subsections": [
+        {
+          "subsection": "01-document-types",
+          "workstation_id": "codestra-document-intelligence::di-02-classification::01-document-types",
+          "branch": "subsection/di-02-classification--01-document-types",
+          "parent_branch": "section/di-02-classification",
+          "order": 1,
+          "depends_on": [],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-02-classification/subsections/01-document-types/repo"
+        },
+        {
+          "subsection": "02-classifier",
+          "workstation_id": "codestra-document-intelligence::di-02-classification::02-classifier",
+          "branch": "subsection/di-02-classification--02-classifier",
+          "parent_branch": "section/di-02-classification",
+          "order": 2,
+          "depends_on": [
+            "codestra-document-intelligence::di-02-classification::01-document-types"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-02-classification/subsections/02-classifier/repo"
+        },
+        {
+          "subsection": "03-confidence-policy",
+          "workstation_id": "codestra-document-intelligence::di-02-classification::03-confidence-policy",
+          "branch": "subsection/di-02-classification--03-confidence-policy",
+          "parent_branch": "section/di-02-classification",
+          "order": 3,
+          "depends_on": [
+            "codestra-document-intelligence::di-02-classification::02-classifier"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-02-classification/subsections/03-confidence-policy/repo"
+        }
+      ]
+    },
+    {
+      "section": "di-03-extraction",
+      "branch": "section/di-03-extraction",
+      "order": 3,
+      "depends_on": [
+        "codestra-document-intelligence::di-02-classification"
+      ],
+      "subsections": [
+        {
+          "subsection": "01-fields",
+          "workstation_id": "codestra-document-intelligence::di-03-extraction::01-fields",
+          "branch": "subsection/di-03-extraction--01-fields",
+          "parent_branch": "section/di-03-extraction",
+          "order": 1,
+          "depends_on": [],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-03-extraction/subsections/01-fields/repo"
+        },
+        {
+          "subsection": "02-tables",
+          "workstation_id": "codestra-document-intelligence::di-03-extraction::02-tables",
+          "branch": "subsection/di-03-extraction--02-tables",
+          "parent_branch": "section/di-03-extraction",
+          "order": 2,
+          "depends_on": [
+            "codestra-document-intelligence::di-03-extraction::01-fields"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-03-extraction/subsections/02-tables/repo"
+        },
+        {
+          "subsection": "03-entities",
+          "workstation_id": "codestra-document-intelligence::di-03-extraction::03-entities",
+          "branch": "subsection/di-03-extraction--03-entities",
+          "parent_branch": "section/di-03-extraction",
+          "order": 3,
+          "depends_on": [
+            "codestra-document-intelligence::di-03-extraction::02-tables"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-03-extraction/subsections/03-entities/repo"
+        }
+      ]
+    },
+    {
+      "section": "di-04-orchestration",
+      "branch": "section/di-04-orchestration",
+      "order": 4,
+      "depends_on": [
+        "codestra-document-intelligence::di-03-extraction"
+      ],
+      "subsections": [
+        {
+          "subsection": "01-jobs",
+          "workstation_id": "codestra-document-intelligence::di-04-orchestration::01-jobs",
+          "branch": "subsection/di-04-orchestration--01-jobs",
+          "parent_branch": "section/di-04-orchestration",
+          "order": 1,
+          "depends_on": [],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-04-orchestration/subsections/01-jobs/repo"
+        },
+        {
+          "subsection": "02-workers",
+          "workstation_id": "codestra-document-intelligence::di-04-orchestration::02-workers",
+          "branch": "subsection/di-04-orchestration--02-workers",
+          "parent_branch": "section/di-04-orchestration",
+          "order": 2,
+          "depends_on": [
+            "codestra-document-intelligence::di-04-orchestration::01-jobs"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-04-orchestration/subsections/02-workers/repo"
+        },
+        {
+          "subsection": "03-retry-dlq",
+          "workstation_id": "codestra-document-intelligence::di-04-orchestration::03-retry-dlq",
+          "branch": "subsection/di-04-orchestration--03-retry-dlq",
+          "parent_branch": "section/di-04-orchestration",
+          "order": 3,
+          "depends_on": [
+            "codestra-document-intelligence::di-04-orchestration::02-workers"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-04-orchestration/subsections/03-retry-dlq/repo"
+        }
+      ]
+    },
+    {
+      "section": "di-05-api",
+      "branch": "section/di-05-api",
+      "order": 5,
+      "depends_on": [
+        "codestra-document-intelligence::di-04-orchestration"
+      ],
+      "subsections": [
+        {
+          "subsection": "01-rest",
+          "workstation_id": "codestra-document-intelligence::di-05-api::01-rest",
+          "branch": "subsection/di-05-api--01-rest",
+          "parent_branch": "section/di-05-api",
+          "order": 1,
+          "depends_on": [],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-05-api/subsections/01-rest/repo"
+        },
+        {
+          "subsection": "02-webhooks",
+          "workstation_id": "codestra-document-intelligence::di-05-api::02-webhooks",
+          "branch": "subsection/di-05-api--02-webhooks",
+          "parent_branch": "section/di-05-api",
+          "order": 2,
+          "depends_on": [
+            "codestra-document-intelligence::di-05-api::01-rest"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-05-api/subsections/02-webhooks/repo"
+        },
+        {
+          "subsection": "03-openapi-postman",
+          "workstation_id": "codestra-document-intelligence::di-05-api::03-openapi-postman",
+          "branch": "subsection/di-05-api--03-openapi-postman",
+          "parent_branch": "section/di-05-api",
+          "order": 3,
+          "depends_on": [
+            "codestra-document-intelligence::di-05-api::02-webhooks"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-05-api/subsections/03-openapi-postman/repo"
+        }
+      ]
+    },
+    {
+      "section": "di-06-data",
+      "branch": "section/di-06-data",
+      "order": 6,
+      "depends_on": [
+        "codestra-document-intelligence::di-05-api"
+      ],
+      "subsections": [
+        {
+          "subsection": "01-metadata",
+          "workstation_id": "codestra-document-intelligence::di-06-data::01-metadata",
+          "branch": "subsection/di-06-data--01-metadata",
+          "parent_branch": "section/di-06-data",
+          "order": 1,
+          "depends_on": [],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-06-data/subsections/01-metadata/repo"
+        },
+        {
+          "subsection": "02-artifacts",
+          "workstation_id": "codestra-document-intelligence::di-06-data::02-artifacts",
+          "branch": "subsection/di-06-data--02-artifacts",
+          "parent_branch": "section/di-06-data",
+          "order": 2,
+          "depends_on": [
+            "codestra-document-intelligence::di-06-data::01-metadata"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-06-data/subsections/02-artifacts/repo"
+        },
+        {
+          "subsection": "03-retention",
+          "workstation_id": "codestra-document-intelligence::di-06-data::03-retention",
+          "branch": "subsection/di-06-data--03-retention",
+          "parent_branch": "section/di-06-data",
+          "order": 3,
+          "depends_on": [
+            "codestra-document-intelligence::di-06-data::02-artifacts"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-06-data/subsections/03-retention/repo"
+        }
+      ]
+    },
+    {
+      "section": "di-07-security",
+      "branch": "section/di-07-security",
+      "order": 7,
+      "depends_on": [
+        "codestra-document-intelligence::di-06-data"
+      ],
+      "subsections": [
+        {
+          "subsection": "01-auth-rbac",
+          "workstation_id": "codestra-document-intelligence::di-07-security::01-auth-rbac",
+          "branch": "subsection/di-07-security--01-auth-rbac",
+          "parent_branch": "section/di-07-security",
+          "order": 1,
+          "depends_on": [],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-07-security/subsections/01-auth-rbac/repo"
+        },
+        {
+          "subsection": "02-tenant-isolation",
+          "workstation_id": "codestra-document-intelligence::di-07-security::02-tenant-isolation",
+          "branch": "subsection/di-07-security--02-tenant-isolation",
+          "parent_branch": "section/di-07-security",
+          "order": 2,
+          "depends_on": [
+            "codestra-document-intelligence::di-07-security::01-auth-rbac"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-07-security/subsections/02-tenant-isolation/repo"
+        },
+        {
+          "subsection": "03-privacy-audit",
+          "workstation_id": "codestra-document-intelligence::di-07-security::03-privacy-audit",
+          "branch": "subsection/di-07-security--03-privacy-audit",
+          "parent_branch": "section/di-07-security",
+          "order": 3,
+          "depends_on": [
+            "codestra-document-intelligence::di-07-security::02-tenant-isolation"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-07-security/subsections/03-privacy-audit/repo"
+        }
+      ]
+    },
+    {
+      "section": "di-08-observability",
+      "branch": "section/di-08-observability",
+      "order": 8,
+      "depends_on": [
+        "codestra-document-intelligence::di-07-security"
+      ],
+      "subsections": [
+        {
+          "subsection": "01-metrics",
+          "workstation_id": "codestra-document-intelligence::di-08-observability::01-metrics",
+          "branch": "subsection/di-08-observability--01-metrics",
+          "parent_branch": "section/di-08-observability",
+          "order": 1,
+          "depends_on": [],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-08-observability/subsections/01-metrics/repo"
+        },
+        {
+          "subsection": "02-logs-traces",
+          "workstation_id": "codestra-document-intelligence::di-08-observability::02-logs-traces",
+          "branch": "subsection/di-08-observability--02-logs-traces",
+          "parent_branch": "section/di-08-observability",
+          "order": 2,
+          "depends_on": [
+            "codestra-document-intelligence::di-08-observability::01-metrics"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-08-observability/subsections/02-logs-traces/repo"
+        },
+        {
+          "subsection": "03-slo-alerts",
+          "workstation_id": "codestra-document-intelligence::di-08-observability::03-slo-alerts",
+          "branch": "subsection/di-08-observability--03-slo-alerts",
+          "parent_branch": "section/di-08-observability",
+          "order": 3,
+          "depends_on": [
+            "codestra-document-intelligence::di-08-observability::02-logs-traces"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-08-observability/subsections/03-slo-alerts/repo"
+        }
+      ]
+    },
+    {
+      "section": "di-09-release",
+      "branch": "section/di-09-release",
+      "order": 9,
+      "depends_on": [
+        "codestra-document-intelligence::di-08-observability"
+      ],
+      "subsections": [
+        {
+          "subsection": "01-testing",
+          "workstation_id": "codestra-document-intelligence::di-09-release::01-testing",
+          "branch": "subsection/di-09-release--01-testing",
+          "parent_branch": "section/di-09-release",
+          "order": 1,
+          "depends_on": [],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-09-release/subsections/01-testing/repo"
+        },
+        {
+          "subsection": "02-performance-dr",
+          "workstation_id": "codestra-document-intelligence::di-09-release::02-performance-dr",
+          "branch": "subsection/di-09-release--02-performance-dr",
+          "parent_branch": "section/di-09-release",
+          "order": 2,
+          "depends_on": [
+            "codestra-document-intelligence::di-09-release::01-testing"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-09-release/subsections/02-performance-dr/repo"
+        },
+        {
+          "subsection": "03-certification-promotion",
+          "workstation_id": "codestra-document-intelligence::di-09-release::03-certification-promotion",
+          "branch": "subsection/di-09-release--03-certification-promotion",
+          "parent_branch": "section/di-09-release",
+          "order": 3,
+          "depends_on": [
+            "codestra-document-intelligence::di-09-release::02-performance-dr"
+          ],
+          "required_gates": [
+            "lint",
+            "unit",
+            "integration",
+            "contract",
+            "security",
+            "clean_tree",
+            "remote_sha_match",
+            "ci_exact_sha",
+            "review",
+            "regression"
+          ],
+          "worktree": "/srv/codestra/workstations/Codestra-Document-Intelligence/sections/di-09-release/subsections/03-certification-promotion/repo"
+        }
+      ]
+    }
+  ]
+}
