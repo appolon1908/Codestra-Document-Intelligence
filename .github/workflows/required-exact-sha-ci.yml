@@ -12,14 +12,30 @@ on:
 
 permissions:
   contents: read
-
-concurrency:
-  group: required-exact-sha-${{ github.event_name == 'workflow_dispatch' && inputs.target_sha || github.event.pull_request.head.sha }}
-  cancel-in-progress: false
+  statuses: write
 
 jobs:
-  exact-sha:
-    name: Test exact repository SHA
+  admission:
+    name: exact-SHA admission
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Enforce trusted source and development lane
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name || '' }}
+          THIS_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            test "$HEAD_REPO" = "$THIS_REPO"
+          else
+            test "${GITHUB_REF_NAME}" = "development"
+          fi
+
+  exact-worker:
+    name: exact-SHA worker
+    needs: admission
     runs-on: [self-hosted, Linux, X64, codestra-ci, codestra-document-intelligence]
     timeout-minutes: 30
     env:
@@ -27,28 +43,18 @@ jobs:
       EXPECTED_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.target_sha || github.event.pull_request.head.sha }}
       BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
     steps:
-      - name: Enforce certification lane
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
-            test "${GITHUB_REF_NAME}" = "development"
-          fi
-
       - name: Check out exact candidate SHA
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ env.EXPECTED_SHA }}
           fetch-depth: 0
           persist-credentials: false
-
       - name: Prove exact checkout
         shell: bash
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
-
-      - name: Reject merge, rebase, or cherry-pick residue
+      - name: Reject operation residue
         shell: bash
         run: |
           set -euo pipefail
@@ -56,19 +62,16 @@ jobs:
           test ! -e .git/CHERRY_PICK_HEAD
           test ! -d .git/rebase-merge
           test ! -d .git/rebase-apply
-
-      - name: Validate committed candidate diff and repository integrity
+      - name: Validate committed diff and repository integrity
         shell: bash
         run: |
           set -euo pipefail
           if [[ "$EVENT_NAME" == "pull_request" ]]; then
-            test -n "$BASE_SHA"
             git diff --check "$BASE_SHA" "$EXPECTED_SHA"
           else
             git diff --check "$EXPECTED_SHA^" "$EXPECTED_SHA"
           fi
           git fsck --no-progress
-
       - name: Record exact-SHA evidence in runner-controlled storage
         shell: bash
         run: |
@@ -79,10 +82,7 @@ jobs:
             echo "repository=${GITHUB_REPOSITORY}"
             echo "sha=$(git rev-parse HEAD)"
             echo "runner=${RUNNER_NAME}"
-            echo "architecture=${RUNNER_ARCH}"
-            echo "os=${RUNNER_OS}"
           } > "$evidence"
-
       - name: Upload exact-SHA evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -90,3 +90,37 @@ jobs:
           path: ${{ runner.temp }}/exact-sha-evidence.txt
           if-no-files-found: error
           retention-days: 14
+
+  exact-sha:
+    name: Test exact repository SHA
+    if: ${{ always() }}
+    needs: [admission, exact-worker]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Preserve required aggregate context
+        shell: bash
+        env:
+          ADMISSION: ${{ needs.admission.result }}
+          WORKER: ${{ needs.exact-worker.result }}
+        run: |
+          set -euo pipefail
+          test "$ADMISSION" = "success"
+          test "$WORKER" = "success"
+
+  publish-manual-status:
+    name: Publish manual exact-SHA status
+    if: ${{ always() && github.event_name == 'workflow_dispatch' }}
+    needs: [exact-sha]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Bind manual certification result to requested SHA
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ inputs.target_sha }}
+          RESULT: ${{ needs.exact-sha.result }}
+        run: |
+          set -euo pipefail
+          state=failure
+          if [[ "$RESULT" == "success" ]]; then state=success; fi
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${TARGET_SHA}"             -f state="$state"             -f context="codestra/exact-sha-manual"             -f description="Manual exact-SHA certification: $RESULT"
